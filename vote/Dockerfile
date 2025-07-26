@@ -45,7 +45,7 @@ ENV OTEL_LOGS_EXPORTER="otlp"                        # Export logs using OTLP pr
 ENV OTEL_METRICS_EXPORTER="otlp"                     # Export metrics using OTLP protocol
 ENV OTEL_TRACES_EXPORTER="otlp"                      # Export traces using OTLP protocol
 ENV OTEL_EXPORTER_OTLP_ENDPOINT="localhost:4317"    # OTLP collector endpoint (adjust in Kubernetes)
-ENV OTEL_SERVICE_NAME=vote-service                   # Service name reported in telemetry
+ENV OTEL_SERVICE_NAME="vote-service"                   # Service name reported in telemetry
 
 # Final command: run the Gunicorn server wrapped with OpenTelemetry instrumentation
 CMD ["opentelemetry-instrument", "gunicorn", "app:app", "-b", "0.0.0.0:80", "--log-file", "-", "--access-logfile", "-", "--workers", "4", "--keep-alive", "0"]
