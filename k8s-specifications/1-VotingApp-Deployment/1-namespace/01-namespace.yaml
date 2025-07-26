@@ -1,0 +1,6 @@
+#1. NameSpace Creation for Application Deployment
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: observability-sre

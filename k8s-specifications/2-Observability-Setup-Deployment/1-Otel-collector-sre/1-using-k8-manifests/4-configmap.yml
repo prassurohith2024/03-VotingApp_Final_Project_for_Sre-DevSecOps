@@ -1,0 +1,146 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: opentelemetry-demo-otelcol
+  namespace: observability-sre
+  labels:
+    app.kubernetes.io/name: otelcol
+    app.kubernetes.io/instance: opentelemetry-demo
+    app.kubernetes.io/version: "0.82.0"
+data:
+  relay: |
+    connectors:
+      spanmetrics: null
+
+    exporters:
+      logging: {}
+      jaeger:
+        endpoint: 'jaeger-collector.observability-sre.svc.cluster.local:14250'
+        tls:
+          insecure: true
+      prometheus:
+        enable_open_metrics: true
+        endpoint: 0.0.0.0:9464
+        resource_to_telemetry_conversion:
+          enabled: true
+
+    extensions:
+      health_check: {}
+      memory_ballast:
+        size_in_percentage: 40
+
+    processors:
+      batch: {}
+      filter/ottl:
+        error_mode: ignore
+        metrics:
+          metric:
+          - name == "rpc.server.duration"
+      k8sattributes:
+        extract:
+          metadata:
+          - k8s.namespace.name
+          - k8s.deployment.name
+          - k8s.statefulset.name
+          - k8s.daemonset.name
+          - k8s.cronjob.name
+          - k8s.job.name
+          - k8s.node.name
+          - k8s.pod.name
+          - k8s.pod.uid
+          - k8s.pod.start_time
+        passthrough: false
+        pod_association:
+        - sources:
+          - from: resource_attribute
+            name: k8s.pod.ip
+        - sources:
+          - from: resource_attribute
+            name: k8s.pod.uid
+        - sources:
+          - from: connection
+      memory_limiter:
+        check_interval: 5s
+        limit_percentage: 80
+        spike_limit_percentage: 25
+      resource:
+        attributes:
+        - action: insert
+          from_attribute: k8s.pod.uid
+          key: service.instance.id
+      transform:
+        metric_statements:
+        - context: metric
+          statements:
+          - set(description, "") where name == "queueSize"
+          - set(description, "") where name == "rpc.server.duration"
+          - set(description, "") where name == "http.client.duration"
+
+    receivers:
+      jaeger:
+        protocols:
+          grpc:
+            endpoint: 0.0.0.0:14250
+          thrift_compact:
+            endpoint: 0.0.0.0:6831
+          thrift_http:
+            endpoint: 0.0.0.0:14268
+      otlp:
+        protocols:
+          grpc:
+            endpoint: 0.0.0.0:4317
+          http:
+            cors:
+              allowed_origins:
+              - http://*
+              - https://*
+            endpoint: 0.0.0.0:4318
+      zipkin:
+        endpoint: 0.0.0.0:9411
+
+    service:
+      extensions:
+      - health_check
+      - memory_ballast
+      pipelines:
+        logs:
+          exporters:
+          - logging
+          processors:
+          - k8sattributes
+          - memory_limiter
+          - batch
+          receivers:
+          - otlp
+        metrics:
+          exporters:
+          - prometheus
+          - logging
+          processors:
+          - k8sattributes
+          - memory_limiter
+          - filter/ottl
+          - transform
+          - resource
+          - batch
+          receivers:
+          - otlp
+          - spanmetrics
+        traces:
+          exporters:
+          - jaeger
+          - logging
+          - spanmetrics
+          processors:
+          - k8sattributes
+          - memory_limiter
+          - resource
+          - batch
+          receivers:
+          - otlp
+          - jaeger
+          - zipkin
+
+      telemetry:
+        metrics:
+          address: 0.0.0.0:8888
