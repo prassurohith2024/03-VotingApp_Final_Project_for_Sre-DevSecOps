@@ -4,6 +4,7 @@
   "description": "",
   "main": "server.js",
   "scripts": {
+    "start": "node -r ./otel.js server.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "",
@@ -15,6 +16,12 @@
     "method-override": "^3.0.0",
     "pg": "^8.8.0",
     "socket.io": "^4.7.2",
-    "stoppable": "^1.1.0"
+    "stoppable": "^1.1.0",
+    "@opentelemetry/sdk-node": "^0.31.1",
+    "@opentelemetry/auto-instrumentations-node": "^0.31.1",
+    "@opentelemetry/exporter-trace-otlp-grpc": "^0.31.1",
+    "@opentelemetry/resources": "^1.7.0",
+    "@opentelemetry/semantic-conventions": "^1.10.0",
+    "@grpc/grpc-js": "^1.8.14"
   }
 }

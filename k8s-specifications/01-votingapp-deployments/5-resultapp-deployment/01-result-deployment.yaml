@@ -1,0 +1,36 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: result
+  name: result
+  namespace: observability-sre
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: result
+  template:
+    metadata:
+      labels:
+        app: result
+    spec:
+      containers:
+      - image: 655252755560.dkr.ecr.ap-southeast-1.amazonaws.com/result:latest
+        name: result
+        ports:
+        - containerPort: 80
+          name: result
+        env:
+        - name: OTEL_EXPORTER_OTLP_ENDPOINT
+          value: "opentelemetry-demo-otelcol.observability-sre.svc.cluster.local:4317"
+        - name: OTEL_EXPORTER_OTLP_INSECURE
+          value: "true"
+        - name: OTEL_TRACES_EXPORTER
+          value: "otlp"
+        - name: OTEL_METRICS_EXPORTER
+          value: "otlp"
+        - name: OTEL_LOGS_EXPORTER
+          value: "otlp"
+        - name: OTEL_SERVICE_NAME
+          value: "result-service"

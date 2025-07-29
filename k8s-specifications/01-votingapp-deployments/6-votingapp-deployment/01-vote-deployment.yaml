@@ -1,0 +1,46 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: vote
+  name: vote
+  namespace: observability-sre
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: vote
+  template:
+    metadata:
+      labels:
+        app: vote
+    spec:
+      containers:
+      - image: 655252755560.dkr.ecr.ap-southeast-1.amazonaws.com/vote-app:v1
+        name: vote
+        ports:
+        - containerPort: 80
+          name: vote
+        env:
+        - name: OTEL_EXPORTER_OTLP_ENDPOINT
+          value: "opentelemetry-demo-otelcol.observability-sre.svc.cluster.local:4317"
+        - name: OTEL_EXPORTER_OTLP_INSECURE
+          value: "true"
+        - name: OTEL_LOGS_EXPORTER
+          value: "otlp"
+          #value: "console"
+        - name: OTEL_METRICS_EXPORTER
+          value: "otlp"
+          #value: "console"
+        - name: OTEL_TRACES_EXPORTER
+          value: "otlp"
+          #value: "console"
+        - name: OTEL_SERVICE_NAME
+          value: "VoteApp-Service"
+        resources:
+          requests:
+            memory: "128Mi"
+            cpu: "100m"
+          limits:
+            memory: "256Mi"
+            cpu: "250m"

@@ -1,25 +1,28 @@
 FROM node:18-slim
 
-# add curl for healthcheck
+# Install curl, tini (for proper signal handling), python3 and build tools needed for native modules
 RUN apt-get update && \
-    apt-get install -y --no-install-recommends curl tini && \
+    apt-get install -y --no-install-recommends curl tini python3 make g++ gcc && \
     rm -rf /var/lib/apt/lists/*
 
 WORKDIR /usr/local/app
 
-# have nodemon available for local dev use (file watching)
+# Install nodemon globally (optional)
 RUN npm install -g nodemon
 
+# Copy package files and install dependencies
 COPY package*.json ./
+RUN npm ci && npm cache clean --force
 
-RUN npm ci && \
- npm cache clean --force && \
- mv /usr/local/app/node_modules /node_modules
-
+# Copy application source including otel.js
 COPY . .
 
+# Expose the port your app listens on
 ENV PORT=80
 EXPOSE 80
 
+# Use tini for proper signal handling
 ENTRYPOINT ["/usr/bin/tini", "--"]
-CMD ["node", "server.js"]
+
+# Start the app with OpenTelemetry auto-instrumentation
+CMD ["npm", "start"]
